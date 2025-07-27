@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Galeri Foto Mobile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #6c63ff;
+      --secondary: #ff6584;
+      --accent: #43cea2;
+      --dark: #2a2a72;
+      --light: #f8f9fa;
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+      padding: 10px;
+      touch-action: manipulation;
+    }
+    
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      padding: 15px 0;
+      margin-bottom: 10px;
+    }
+    
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      position: relative;
+      background: linear-gradient(45deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .subtitle {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 15px;
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .btn {
+      padding: 12px 20px;
+      font-size: 1rem;
+      border-radius: 50px;
+      border: none;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      font-weight: 600;
+    }
+    
+    .btn:active {
+      transform: scale(0.98);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(45deg, var(--primary), var(--accent));
+    }
+    
+    .gallery-container {
+      overflow-x: auto;
+      display: flex;
+      gap: 15px;
+      padding: 20px 10px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      margin-bottom: 20px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 15px;
+      min-height: 250px;
+    }
+    
+    .gallery-container::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .empty-gallery {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .empty-gallery i {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      color: rgba(255,255,255,0.3);
+    }
+    
+    .photo {
+      scroll-snap-align: center;
+      flex: 0 0 auto;
+      transition: var(--transition);
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      height: 220px;
+      width: 280px;
+    }
+    
+    .photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 15px;
+      display: block;
+    }
+    
+    .caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 12px;
+      color: white;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+      text-align: center;
+    }
+    
+    .caption h3 {
+      font-size: 1.2rem;
+      margin-bottom: 3px;
+    }
+    
+    .caption p {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+    
+    .delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 0, 0, 0.7);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      z-index: 3;
+    }
+    
+    /* Modal Upload */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .modal.active {
+      display: flex;
+      opacity: 1;
+    }
+    
+    .modal-content {
+      background: #2c3e50;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 400px;
+      padding: 20px;
+      position: relative;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .modal-header h2 {
+      font-size: 1.4rem;
+      color: var(--accent);
+    }
+    
+    .close-modal {
+      background: rgba(255,255,255,0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      color: white;
+    }
+    
+    .upload-area {
+      border: 2px dashed rgba(255,255,255,0.3);
+      border-radius: 12px;
+      padding: 25px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 15px;
+      background: rgba(0,0,0,0.2);
+    }
+    
+    .upload-area i {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      color: var(--accent);
+    }
+    
+    .upload-area p {
+      font-size: 0.95rem;
+      margin-bottom: 5px;
+    }
+    
+    .upload-area span {
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+    
+    #file-input {
+      display: none;
+    }
+    
+    .preview-container {
+      display: none;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    
+    .preview-img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 12px;
+      margin: 0 auto 10px;
+      display: block;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 0.9rem;
+    }
+    
+    .form-group textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(45deg, var(--primary), var(--accent));
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+    
+    /* Fullscreen */
+    .fullscreen {
+      display: none;
+      position: fixed;
+      top: 0; 
+      left: 0;
+      width: 100vw; 
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.97);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .fullscreen.active {
+      display: flex;
+      opacity: 1;
+    }
+    
+    .fullscreen-content {
+      position: relative;
+      width: 95%;
+      height: 95%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .fullscreen img {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 10px;
+    }
+    
+    .fullscreen-caption {
+      color: white;
+      text-align: center;
+      margin-top: 15px;
+      max-width: 90%;
+    }
+    
+    .fullscreen-caption h3 {
+      font-size: 1.4rem;
+      margin-bottom: 5px;
+      color: var(--accent);
+    }
+    
+    .fullscreen-caption p {
+      font-size: 1rem;
+    }
+    
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 1.8rem;
+      color: white;
+      cursor: pointer;
+      z-index: 1001;
+      background: rgba(255,255,255,0.1);
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .nav-arrows {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 15px;
+      transform: translateY(-50%);
+      z-index: 1001;
+    }
+    
+    .arrow {
+      color: white;
+      font-size: 2rem;
+      cursor: pointer;
+      background: rgba(255,255,255,0.1);
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .photo-counter {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.1);
+      padding: 6px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+    
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 50px;
+      z-index: 2000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: fadeInOut 3s forwards;
+      display: none;
+    }
+    
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    }
+    
+    /* Responsif untuk HP */
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.6rem;
+      }
+      
+      .btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+      }
+      
+      .photo {
+        height: 200px;
+        width: 250px;
+      }
+      
+      .gallery-container {
+        padding: 15px 8px;
+        gap: 10px;
+      }
+      
+      .modal-content {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-camera"></i> Galeri Foto HP</h1>
+      <p class="subtitle">Unggah dan lihat foto langsung di HP Anda!</p>
+      
+      <div class="controls">
+        <button class="btn btn-primary" id="upload-btn">
+          <i class="fas fa-cloud-upload-alt"></i> Upload
+        </button>
+        <button class="btn" id="clear-btn">
+          <i class="fas fa-trash-alt"></i> Hapus
+        </button>
+      </div>
+    </header>
+    
+    <div class="gallery-container" id="gallery">
+      <div class="photo">
+        <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="Pegunungan">
+        <div class="caption">
+          <h3>Pegunungan Alpen</h3>
+          <p>Keindahan alam Swiss</p>
+        </div>
+        <div class="delete-btn">
+          <i class="fas fa-times"></i>
+        </div>
+      </div>
+      <div class="photo">
+        <img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="Pantai">
+        <div class="caption">
+          <h3>Pantai Tropis</h3>
+          <p>Pasir putih dan air jernih</p>
+        </div>
+        <div class="delete-btn">
+          <i class="fas fa-times"></i>
+        </div>
+      </div>
+      <!-- Foto yang diupload akan muncul di sini -->
+    </div>
+    
+    <!-- Modal Upload -->
+    <div class="modal" id="upload-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-upload"></i> Unggah Foto</h2>
+          <div class="close-modal" id="close-modal">
+            <i class="fas fa-times"></i>
+          </div>
+        </div>
+        
+        <div class="upload-area" id="upload-area">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Ketuk untuk memilih foto</p>
+          <span>Format: JPG, PNG (Maks. 5MB)</span>
+          <input type="file" id="file-input" accept="image/*">
+        </div>
+        
+        <div class="preview-container" id="preview-container">
+          <img src="" alt="Preview" class="preview-img" id="preview-img">
+        </div>
+        
+        <div class="form-group">
+          <label for="photo-title"><i class="fas fa-heading"></i> Judul Foto</label>
+          <input type="text" id="photo-title" placeholder="Judul foto">
+        </div>
+        
+        <div class="form-group">
+          <label for="photo-desc"><i class="fas fa-align-left"></i> Deskripsi</label>
+          <textarea id="photo-desc" placeholder="Deskripsi foto"></textarea>
+        </div>
+        
+        <button class="submit-btn" id="submit-btn" disabled>
+          <i class="fas fa-check"></i> Unggah
+        </button>
+      </div>
+    </div>
+    
+    <!-- Tampilan Fullscreen -->
+    <div class="fullscreen" id="fullscreen">
+      <div class="close-btn" id="close-fullscreen">
+        <i class="fas fa-times"></i>
+      </div>
+      
+      <div class="nav-arrows">
+        <div class="arrow" id="prev-photo">
+          <i class="fas fa-chevron-left"></i>
+        </div>
+        <div class="arrow" id="next-photo">
+          <i class="fas fa-chevron-right"></i>
+        </div>
+      </div>
+      
+      <div class="fullscreen-content">
+        <img src="" alt="Full Image" id="full-img">
+        <div class="fullscreen-caption">
+          <h3 id="full-title"></h3>
+          <p id="full-desc"></p>
+        </div>
+      </div>
+      
+      <div class="photo-counter" id="photo-counter"></div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const gallery = document.getElementById("gallery");
+    const uploadBtn = document.getElementById("upload-btn");
+    const clearBtn = document.getElementById("clear-btn");
+    const uploadModal = document.getElementById("upload-modal");
+    const closeModal = document.getElementById("close-modal");
+    const uploadArea = document.getElementById("upload-area");
+    const fileInput = document.getElementById("file-input");
+    const previewContainer = document.getElementById("preview-container");
+    const previewImg = document.getElementById("preview-img");
+    const photoTitle = document.getElementById("photo-title");
+    const photoDesc = document.getElementById("photo-desc");
+    const submitBtn = document.getElementById("submit-btn");
+    const fullscreen = document.getElementById("fullscreen");
+    const fullImg = document.getElementById("full-img");
+    const fullTitle = document.getElementById("full-title");
+    const fullDesc = document.getElementById("full-desc");
+    const closeFullscreen = document.getElementById("close-fullscreen");
+    const prevBtn = document.getElementById("prev-photo");
+    const nextBtn = document.getElementById("next-photo");
+    const photoCounter = document.getElementById("photo-counter");
+    const notification = document.getElementById("notification");
+    
+    // State
+    let currentIndex = 0;
+    let uploadedPhotos = [];
+    
+    // Initialize with sample photos
+    const samplePhotos = [
+      {
+        title: "Pegunungan Alpen",
+        desc: "Keindahan alam Swiss",
+        src: "https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+      },
+      {
+        title: "Pantai Tropis",
+        desc: "Pasir putih dan air jernih",
+        src: "https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+      }
+    ];
+    
+    // Store all photos
+    uploadedPhotos = [...samplePhotos];
+    
+    // Event Listeners
+    uploadBtn.addEventListener("click", openUploadModal);
+    closeModal.addEventListener("click", closeUploadModal);
+    clearBtn.addEventListener("click", clearGallery);
+    uploadArea.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", handleFileSelect);
+    submitBtn.addEventListener("click", uploadPhoto);
+    
+    // Fullscreen functionality
+    closeFullscreen.addEventListener("click", closeFullscreenView);
+    prevBtn.addEventListener("click", showPrevPhoto);
+    nextBtn.addEventListener("click", showNextPhoto);
+    
+    // Initialize gallery
+    initGallery();
+    
+    // Functions
+    function initGallery() {
+      samplePhotos.forEach((photo, index) => {
+        addPhotoToGallery(photo, index);
+      });
+    }
+    
+    function openUploadModal() {
+      uploadModal.classList.add("active");
+    }
+    
+    function closeUploadModal() {
+      uploadModal.classList.remove("active");
+      resetUploadForm();
+    }
+    
+    function resetUploadForm() {
+      fileInput.value = "";
+      previewContainer.style.display = "none";
+      photoTitle.value = "";
+      photoDesc.value = "";
+      submitBtn.disabled = true;
+    }
+    
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      
+      if (file) {
+        // Check file type and size
+        const validTypes = ["image/jpeg", "image/png"];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if (!validTypes.includes(file.type)) {
+          showNotification("Hanya file JPG/PNG yang didukung");
+          return;
+        }
+        
+        if (file.size > maxSize) {
+          showNotification("Ukuran file maksimal 5MB");
+          return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          previewImg.src = event.target.result;
+          previewContainer.style.display = "block";
+          submitBtn.disabled = false;
+          
+          // Set default title
+          const fileName = file.name.replace(/\.[^/.]+$/, "");
+          photoTitle.value = fileName || "Foto Baru";
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+    
+    function uploadPhoto() {
+      const title = photoTitle.value.trim() || "Foto Tanpa Judul";
+      const desc = photoDesc.value.trim() || "Foto indah";
+      const src = previewImg.src;
+      
+      // Add to uploaded photos
+      const newPhoto = {
+        title,
+        desc,
+        src
+      };
+      
+      uploadedPhotos.push(newPhoto);
+      
+      // Add to gallery
+      addPhotoToGallery(newPhoto, uploadedPhotos.length - 1);
+      
+      // Close modal and reset form
+      closeUploadModal();
+      
+      // Show success message
+      showNotification(`"${title}" berhasil diunggah!`);
+    }
+    
+    function addPhotoToGallery(photo, index) {
+      const photoElement = document.createElement("div");
+      photoElement.className = "photo";
+      
+      photoElement.innerHTML = `
+        <img src="${photo.src}" alt="${photo.title}">
+        <div class="caption">
+          <h3>${photo.title}</h3>
+          <p>${photo.desc}</p>
+        </div>
+        <div class="delete-btn">
+          <i class="fas fa-times"></i>
+        </div>
+      `;
+      
+      gallery.appendChild(photoElement);
+      
+      // Add event listeners
+      photoElement.querySelector("img").addEventListener("click", () => {
+        openFullscreenView(index);
+      });
+      
+      photoElement.querySelector(".delete-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        deletePhoto(index);
+      });
+    }
+    
+    function deletePhoto(index) {
+      if (confirm("Hapus foto ini?")) {
+        // Remove from array
+        uploadedPhotos.splice(index, 1);
+        
+        // Rebuild gallery
+        rebuildGallery();
+        
+        showNotification("Foto dihapus!");
+      }
+    }
+    
+    function clearGallery() {
+      if (uploadedPhotos.length <= 2) {
+        showNotification("Tidak ada foto untuk dihapus!");
+        return;
+      }
+      
+      if (confirm("Hapus semua foto tambahan?")) {
+        // Keep only the sample photos
+        uploadedPhotos = [...samplePhotos];
+        
+        // Rebuild gallery
+        rebuildGallery();
+        
+        showNotification("Semua foto tambahan dihapus!");
+      }
+    }
+    
+    function rebuildGallery() {
+      // Clear gallery
+      gallery.innerHTML = "";
+      
+      // Add all photos back
+      uploadedPhotos.forEach((photo, index) => {
+        addPhotoToGallery(photo, index);
+      });
+    }
+    
+    function openFullscreenView(index) {
+      currentIndex = index;
+      const photo = uploadedPhotos[index];
+      
+      fullImg.src = photo.src;
+      fullTitle.textContent = photo.title;
+      fullDesc.textContent = photo.desc;
+      photoCounter.textContent = `${index + 1} / ${uploadedPhotos.length}`;
+      
+      fullscreen.classList.add("active");
+    }
+    
+    function closeFullscreenView() {
+      fullscreen.classList.remove("active");
+    }
+    
+    function showPrevPhoto() {
+      currentIndex = (currentIndex - 1 + uploadedPhotos.length) % uploadedPhotos.length;
+      updateFullscreenPhoto();
+    }
+    
+    function showNextPhoto() {
+      currentIndex = (currentIndex + 1) % uploadedPhotos.length;
+      updateFullscreenPhoto();
+    }
+    
+    function updateFullscreenPhoto() {
+      const photo = uploadedPhotos[currentIndex];
+      
+      fullImg.src = photo.src;
+      fullTitle.textContent = photo.title;
+      fullDesc.textContent = photo.desc;
+      photoCounter.textContent = `${currentIndex + 1} / ${uploadedPhotos.length}`;
+    }
+    
+    // Touch events for gallery swipe
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    gallery.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+    
+    gallery.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+    
+    function handleSwipe() {
+      const diff = touchStartX - touchEndX;
+      
+      // Minimal swipe distance
+      if (Math.abs(diff) < 50) return;
+      
+      if (diff > 0) {
+        // Swipe left - next photo
+        gallery.scrollBy({ left: 300, behavior: 'smooth' });
+      } else {
+        // Swipe right - previous photo
+        gallery.scrollBy({ left: -300, behavior: 'smooth' });
+      }
+    }
+    
+    // Notification function
+    function showNotification(message) {
+      notification.textContent = message;
+      notification.style.display = "block";
+      
+      // Hide after 3 seconds
+      setTimeout(() => {
+        notification.style.display = "none";
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
